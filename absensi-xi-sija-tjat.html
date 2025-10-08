@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absensi Siswa</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f2f2f7;
+      margin: 0;
+      padding: 20px;
+      color: #1c1c1e;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 25px;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 600;
+      color: #007aff;
+      margin-bottom: 10px;
+    }
+
+    p {
+      text-align: center;
+      color: #666;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 12px;
+      border: 1px solid #d1d1d6;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    input:focus, select:focus {
+      border-color: #007aff;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0,122,255,0.3);
+    }
+
+    button {
+      background-color: #007aff;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005bbb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007aff;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f7;
+    }
+
+    .rekap {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .card {
+      flex: 1;
+      min-width: 120px;
+      background-color: #f9f9f9;
+      border-radius: 14px;
+      text-align: center;
+      padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #007aff;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1c1c1e;
+    }
+
+    .export-btn {
+      background-color: #34c759;
+      margin-top: 10px;
+    }
+
+    .export-btn:hover {
+      background-color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 Absensi Siswa</h1>
+    <p>Tanggal: <span id="tanggal"></span></p>
+
+    <input type="text" id="nama" placeholder="Masukkan nama siswa..." />
+    <select id="status">
+      <option value="Hadir">Hadir</option>
+      <option value="Izin">Izin</option>
+      <option value="Sakit">Sakit</option>
+      <option value="Alpa">Alpa</option>
+    </select>
+    <button onclick="tambahAbsensi()">Simpan Absensi</button>
+
+    <div class="rekap" id="rekap">
+      <div class="card"><h3>Hadir</h3><p id="hadir">0</p></div>
+      <div class="card"><h3>Izin</h3><p id="izin">0</p></div>
+      <div class="card"><h3>Sakit</h3><p id="sakit">0</p></div>
+      <div class="card"><h3>Alpa</h3><p id="alpa">0</p></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama</th>
+          <th>Status</th>
+          <th>Tanggal</th>
+        </tr>
+      </thead>
+      <tbody id="data-absensi"></tbody>
+    </table>
+
+    <button class="export-btn" onclick="exportCSV()">⬇️ Download Data (CSV)</button>
+  </div>
+
+  <script>
+    const tanggalSekarang = new Date().toLocaleDateString("id-ID", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric"
+    });
+    document.getElementById("tanggal").textContent = tanggalSekarang;
+
+    let daftarAbsensi = JSON.parse(localStorage.getItem("absensi")) || [];
+
+    function renderTabel() {
+      const tbody = document.getElementById("data-absensi");
+      tbody.innerHTML = "";
+
+      daftarAbsensi.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.nama}</td>
+            <td>${item.status}</td>
+            <td>${item.tanggal}</td>
+          </tr>
+        `;
+      });
+
+      updateRekap();
+    }
+
+    function tambahAbsensi() {
+      const nama = document.getElementById("nama").value.trim();
+      const status = document.getElementById("status").value;
+      const tanggal = new Date().toLocaleDateString("id-ID");
+
+      if (!nama) {
+        alert("Masukkan nama siswa terlebih dahulu!");
+        return;
+      }
+
+      const dataBaru = { nama, status, tanggal };
+      daftarAbsensi.push(dataBaru);
+      localStorage.setItem("absensi", JSON.stringify(daftarAbsensi));
+
+      document.getElementById("nama").value = "";
+      renderTabel();
+    }
+
+    function updateRekap() {
+      const count = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0 };
+      daftarAbsensi.forEach(item => count[item.status]++);
+      document.getElementById("hadir").textContent = count.Hadir;
+      document.getElementById("izin").textContent = count.Izin;
+      document.getElementById("sakit").textContent = count.Sakit;
+      document.getElementById("alpa").textContent = count.Alpa;
+    }
+
+    function exportCSV() {
+      if (daftarAbsensi.length === 0) {
+        alert("Tidak ada data untuk diunduh!");
+        return;
+      }
+      let csv = "No,Nama,Status,Tanggal\n";
+      daftarAbsensi.forEach((item, i) => {
+        csv += `${i + 1},${item.nama},${item.status},${item.tanggal}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Data_Absensi.csv";
+      link.click();
+    }
+
+    renderTabel();
+  </script>
+</body>
+</html>
